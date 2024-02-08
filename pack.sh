@@ -4,10 +4,6 @@ cp .service.env squashfs-root/root/
 cp service.sh squashfs-root/bin/
 chmod +x squashfs-root/bin/service.sh
 
-# for debug only !
-cp debug.sh squashfs-root/opt
-chmod +x squashfs-root/opt/debug.sh
-
 cat << 'EOF' > squashfs-root/root/.bashrc
 if [ -f /etc/bashrc ]; then
   . /etc/bashrc

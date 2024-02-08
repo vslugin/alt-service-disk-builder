@@ -27,7 +27,6 @@ EOF
 
 rm -f iso_contents/rescue
 mksquashfs squashfs-root/ iso_contents/rescue
-#-b 1M -noappend
 
 cp -r squashfs-root/usr/lib/syslinux/* iso_contents/syslinux/
 
@@ -76,28 +75,6 @@ xorriso -follow param \
   -append_partition 2 0xef EFI/.efiboot.img \
   -appended_part_as_gpt \
   -o ${DESTINATION_ISO_FILE_PATH} .
-
-#xorriso -follow param \+
-#        -read_mkisofsrc +\
-#        ${UUID_ISO_SHRT:+-volume_date uuid "$UUID_ISO_SHRT"} \+
-#        -as mkisofs \+
-#        $verbose -J -l -r \+?
-#        -exclude-list /tmp/.exclude \?
-#        -eltorito-boot boot/grub/bios.img \
-#        -no-emul-boot \ +
-#        -boot-load-size 4 \ +
-#        -boot-info-table \ +
-#        -partition_offset 16 \ +
-#        --eltorito-catalog  boot/grub/boot.cat \
-#        --grub2-boot-info \
-#        --grub2-mbr \$libdir/grub/i386-pc/boot_hybrid.img \
-#        --mbr-force-bootable \
-#        -eltorito-alt-boot \
-#        -e EFI/.efiboot.img \
-#        -no-emul-boot \
-#        -append_partition 2 0xef /.image/EFI/.efiboot.img \
-#        -appended_part_as_gpt \
-#        "\$imgdir/" || rc=\$?
 
 cd ..
 

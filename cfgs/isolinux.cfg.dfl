@@ -1,0 +1,48 @@
+timeout 600
+totaltimeout 3000
+ui menu.c32
+menu title ALT (regular-rescue)
+prompt 0
+
+label rescue
+  menu label ^Rescue LiveCD
+  kernel /boot/vmlinuz
+  append initrd=/boot/initrd.img fastboot live root=bootchain bootchain=fg,altboot automatic=method:disk,uuid:2024-01-17-05-53-06-00 stagename=rescue ramdisk_size=537081 nosplash showopts  lowmem
+
+label rescue_session
+  menu label Rescue with sess^ions support
+  kernel /boot/vmlinuz
+  append initrd=/boot/initrd.img fastboot live root=bootchain bootchain=fg,altboot automatic=method:disk,uuid:2024-01-17-05-53-06-00 stagename=rescue ramdisk_size=537081 nosplash showopts  live_rw
+
+label rescue_forensic
+  menu label ^Forensic mode (leave disks alone)
+  kernel /boot/vmlinuz
+  append initrd=/boot/initrd.img fastboot live root=bootchain bootchain=fg,altboot automatic=method:disk,uuid:2024-01-17-05-53-06-00 stagename=rescue ramdisk_size=537081 nosplash showopts  max_loop=16 forensic hash=96c14bf9b2fde8527d2dc30f214d1be6945397f48c8066243828180100ac5065 lowmem
+
+label rescue_remote
+  menu label Rescue with remote SSH ^access (DHCP)
+  kernel /boot/vmlinuz
+  append initrd=/boot/initrd.img fastboot live root=bootchain bootchain=fg,altboot automatic=method:disk,uuid:2024-01-17-05-53-06-00 stagename=rescue ramdisk_size=537081 nosplash showopts  ip=dhcp port=22 rootpw=AUTO lowmem
+label mediachk
+  menu label ^Check this media for defects
+  kernel /boot/vmlinuz
+  append initrd=/boot/initrd.img live root=bootchain bootchain=fg,altboot automatic=method:disk,uuid:2024-01-17-05-53-06-00 mediacheck=1 stagename=mediacheck nosplash showopts lowmem 
+
+label hdt
+  menu label ^Hardware info
+  com32 hdt.c32
+  append quiet
+
+label memtest
+  menu label ^Memory Test
+  linux /boot/memtest.bin
+
+label sda
+  menu label Boot from ^1st hard/flash drive
+  localboot 0x80
+
+label sdb
+  menu label Boot from ^2nd hard/flash drive
+  localboot 0x81
+
+default rescue

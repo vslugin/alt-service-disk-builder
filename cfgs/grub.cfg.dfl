@@ -1,0 +1,108 @@
+export GRUB_TERMINAL
+export GRUB_SERIAL_COMMAND
+if [ -n "$GRUB_TERMINAL" ]; then
+  $GRUB_SERIAL_COMMAND
+  terminal_output "$GRUB_TERMINAL"
+  terminal_input "$GRUB_TERMINAL"
+fi
+
+insmod echo
+insmod gzio
+insmod minicmd
+insmod normal
+insmod test
+set timeout=60
+if [ "$grub_platform" = "efi" ]; then set EFI_BOOTARGS=''; fi
+if [ -s $pfxfat/grubenv ]; then
+  load_env --file $pfxfat/grubenv
+  set default="${saved_entry}"
+else
+  set default=
+fi
+function savedefault {
+  if [ -z "${boot_once}" -a -s $pfxfat/grubenv ]; then
+    saved_entry="${chosen}"
+    save_env --file $pfxfat/grubenv saved_entry
+  fi
+}
+menuentry $"Rescue LiveCD" --id 'rescue' {
+  savedefault
+  echo $"Loading Linux vmlinuz$KFLAVOUR ..."
+  linux /boot/vmlinuz$KFLAVOUR changedisk fastboot live root=bootchain bootchain=fg,altboot automatic=method:disk,uuid:2024-01-17-05-53-06-00 stagename=rescue ramdisk_size=537081 nosplash  $EFI_BOOTARGS lowmem
+  echo $"Loading initial ramdisk ..."
+  initrd /boot/initrd$KFLAVOUR.img
+}
+menuentry $"Rescue with sessions support" --id 'rescue_session' {
+  savedefault
+  echo $"Loading Linux vmlinuz$KFLAVOUR ..."
+  linux /boot/vmlinuz$KFLAVOUR changedisk fastboot live root=bootchain bootchain=fg,altboot automatic=method:disk,uuid:2024-01-17-05-53-06-00 stagename=rescue ramdisk_size=537081 nosplash  $EFI_BOOTARGS live_rw
+  echo $"Loading initial ramdisk ..."
+  initrd /boot/initrd$KFLAVOUR.img
+}
+menuentry $"Forensic mode (leave disks alone)" --id 'rescue_forensic' {
+  savedefault
+  echo $"Loading Linux vmlinuz$KFLAVOUR ..."
+  linux /boot/vmlinuz fastboot live root=bootchain bootchain=fg,altboot automatic=method:disk,uuid:2024-01-17-05-53-06-00 stagename=rescue ramdisk_size=537081 nosplash  $EFI_BOOTARGS max_loop=16 forensic hash=96c14bf9b2fde8527d2dc30f214d1be6945397f48c8066243828180100ac5065 lowmem
+  echo $"Loading initial ramdisk ..."
+  initrd /boot/initrd$KFLAVOUR.img
+}
+menuentry $"Rescue with remote SSH access (DHCP)" --id 'rescue_remote' {
+  savedefault
+  echo $"Loading Linux vmlinuz$KFLAVOUR ..."
+  linux /boot/vmlinuz$KFLAVOUR fastboot live root=bootchain bootchain=fg,altboot automatic=method:disk,uuid:2024-01-17-05-53-06-00 stagename=rescue ramdisk_size=537081 nosplash  $EFI_BOOTARGS max_loop=16 ip=dhcp port=22 rootpw=AUTO hash=96c14bf9b2fde8527d2dc30f214d1be6945397f48c8066243828180100ac5065 lowmem
+  echo $"Loading initial ramdisk ..."
+  initrd /boot/initrd$KFLAVOUR.img
+}
+menuentry $"Check this media for defects" --id 'mediachk' {
+  echo $"Loading Linux vmlinuz$KFLAVOUR ..."
+  linux /boot/vmlinuz$KFLAVOUR live root=bootchain bootchain=fg,altboot automatic=method:disk,uuid:2024-01-17-05-53-06-00 stagename=mediacheck lowmem mediacheck=1 nosplash  $EFI_BOOTARGS
+  echo $"Loading initial ramdisk ..."
+  initrd /boot/initrd$KFLAVOUR.img
+}
+if [ "$grub_platform" = "pc" ]; then
+  menuentry $"Hardware Info" --id 'hdt' {
+    echo $"Loading Memory Disk ..."
+    linux16 /boot/memdisk
+    echo $"Loading hdt.img ..."
+    initrd16 /boot/hdt.img
+  }
+fi
+if [ "$grub_platform" = "pc" ]; then
+  menuentry $"Memory Test" --id 'memtest' {
+    linux /boot/memtest.bin
+  }
+fi
+if [ "$grub_platform" = "efi" ]; then
+  menuentry $"Memory Test (may not work with Secure Boot)" --id 'memtest' {
+    linux /boot/memtest.efi
+  }
+fi
+if [ "$grub_platform" = "efi" ]; then
+  menuentry $"UEFI Shell (may not work with Secure Boot)" --id 'efishell' {
+    chainloader /boot/shell.efi
+  }
+fi
+if [ "$grub_platform" = "efi" ]; then
+	menuentry $"UEFI Firmware Settings" --id 'uefi-firmware' {
+		fwsetup
+	}
+fi
+if [ "$grub_platform" = "pc" ]; then
+  menuentry $"Boot from 1st hard/flash drive" --id 'sda' {
+    insmod part_msdos
+    insmod chain
+    set oldroot="$root"
+    set root=(hd0)
+    chainloader +1
+    set root="$oldroot"
+  }
+
+  menuentry $"Boot from 2nd hard/flash drive" --id 'sdb' {
+    insmod part_msdos
+    insmod chain
+    set oldroot="$root"
+    set root=(hd1)
+    chainloader +1
+    set root="$oldroot"
+  }
+fi

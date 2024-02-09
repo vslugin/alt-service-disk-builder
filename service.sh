@@ -6,7 +6,7 @@ TITLE="Сервисный диск на базе Alt Rescue Regular"
 #### начало определения функций ####
 
 function dlg_network_mode(){
-DLG_NETWORK_MODE_OPTIONS="EMPTY Выберите off DHCP Автоматическая_настройка_сети off STATIC Настройка_IP-адреса_и_шлюза off"
+DLG_NETWORK_MODE_OPTIONS="NONE Не_настраивать_сеть off DHCP Автоматическая_настройка_сети off STATIC Настройка_IP-адреса_и_шлюза off"
 echo `dialog --stdout --title "Выбор способа настройки сети" --radiolist "Как настраиваем сеть?" 10 60 10 ${DLG_NETWORK_MODE_OPTIONS}`
 }
 
@@ -16,7 +16,7 @@ echo `dialog --stdout --title "Выбор варианта хранилища" -
 }
 
 function dlg_mode(){
-DLG_MODE_OPTIONS="EMPTY Выберите off UDPCAST Широковещательное_клонирование(udpcast) off BACKUPRESTORE Сохранение_или_восстановление_резервной_копии off"
+DLG_MODE_OPTIONS="NONE Выберите off UDPCAST Широковещательное_клонирование(udpcast) off BACKUPRESTORE Сохранение_или_восстановление_резервной_копии off"
 echo `dialog --stdout --title "Выбор режима работы" --radiolist "Выберите режим" 10 80 10 ${DLG_MODE_OPTIONS}`
 }
 
@@ -35,7 +35,7 @@ ETH_OPTIONS=$(ip -br link show | awk {'print $1'} | grep -v lo | awk {'print $1 
 echo \
 `dialog --stdout --title "Настройка сети вручную" --radiolist "Сетевой интерфейс:" 10 60 10 ${ETH_OPTIONS}` \
 `dialog --stdout --title "Настройка сети вручную" --inputbox "IP-адрес" 10 60 "192.168.254.254/24"` \
-`dialog --stdout --title "Настройка сети вручную" --inputbox "Адрес основного шлюза" 10 60 "192.168.254.253"`
+`dialog --stdout --title "Настройка сети вручную" --inputbox "Адрес основного шлюза" 10 60 "192.168.254.2"`
 }
 
 function dlg_mode_udpcast_get_iface(){
@@ -63,8 +63,8 @@ echo \
 }
 
 function dlg_mount_disk(){
-echo \
-`dialog --stdout --title "Подключение локального диска" --inputbox "Имя устройства:" 10 60 "$DISK_DEV"`
+DLG_MODE_MOUNT_DISK=$(fdisk -l | grep -E '^/dev/sd|^/dev/hd|^/dev/vd|^/dev/nvme' | awk {'print $1'}  | tr '\n' ' ')
+echo `dialog --stdout --title "Выбор раздела для монтирования" --radiolist "Выберите раздел (!ОСТОРОЖНЕЕ С ВЫБОРОМ ПРИ ИСПОЛЬЗОВАНИИ VENTOY!)" 20 80 10 "${DLG_MODE_MOUNT_DISK}"`
 }
 
 function dlg_hostname() {
@@ -75,12 +75,11 @@ function dlg_domain_params() {
     echo \
     `dialog --stdout --title "Параметры подключения к домену" --inputbox "IP-адрес контроллера домена:" 10 60 "$DOMAIN_IP"` \
     `dialog --stdout --title "Параметры подключения к домену" --inputbox "Имя контроллера домена:" 10 60 "$DOMAIN_NAME"` \
-    `dialog --stdout --title "Параметры подключения к домену" --inputbox "Логин для входа в домен:" 10 60 "$DOMAIN_USER"` \
-    `dialog --stdout --title "Параметры подключения к домену" --inputbox "Пароль для входа в домен:" 10 60 "$DOMAIN_PASSWORD"`
+    `dialog --stdout --title "Параметры подключения к домену" --inputbox "Логин для входа в домен:" 10 60 "$DOMAIN_USER"`
 }
 
 function dlg_select_mode(){
-DLG_SELECT_MODE_OPTIONS="EMPTY Выберите on BACKUP Создание_резервной_копии off RESTORE Восстановление_из_резервной_копии off"
+DLG_SELECT_MODE_OPTIONS="NONE Выберите on BACKUP Создание_резервной_копии off RESTORE Восстановление_из_резервной_копии off"
 echo `dialog --stdout --title "Выбор режима работы" --radiolist "Выберите режим" 10 60 10 ${DLG_SELECT_MODE_OPTIONS}`
 }
 
@@ -121,12 +120,12 @@ echo `dialog --stdout --title "Задайте каталог резервной 
 
 function dlg_select_backup() {
 DLG_SELECT_BACKUP_OPTIONS=$(ls ${FTP_MNTPNT} | grep -E '^BACKUP' | awk {'print $1 " " $1 " off"'} | tr '\n' ' ')
-echo `dialog --stdout --title "Выбор резервной копии " --radiolist "Выберите резервную копию" 20 90 10 ${DLG_SELECT_BACKUP_OPTIONS}`
+echo `dialog --stdout --title "Выбор резервной копии " --radiolist "Выберите резервную копию" 20 110 10 ${DLG_SELECT_BACKUP_OPTIONS}`
 }
 
 function dlg_select_backup_disk(){
 DLG_SELECT_BACKUP_DISK_OPTIONS=$(ls ${DISK_MNTPNT} | grep -E '^BACKUP' | awk {'print $1 " " $1 " off"'} | tr '\n' ' ')
-echo `dialog --stdout --title "Выбор резервной копии " --radiolist "Выберите резервную копию" 20 90 10 ${DLG_SELECT_BACKUP_DISK_OPTIONS}`
+echo `dialog --stdout --title "Выбор резервной копии " --radiolist "Выберите резервную копию" 20 110 10 ${DLG_SELECT_BACKUP_DISK_OPTIONS}`
 }
 
 function dlg_message(){
@@ -215,7 +214,7 @@ function mode_restore(){
     DOMAIN_IP=$(echo ${DOMAIN_DATA} | awk {'print $1'})
     DOMAIN_NAME=$(echo ${DOMAIN_DATA} | awk {'print $2'})
     DOMAIN_USER=$(echo ${DOMAIN_DATA} | awk {'print $3'})
-    DOMAIN_PASSWORD=$(echo ${DOMAIN_DATA} | awk {'print $4'})
+    DOMAIN_PASSWORD
   fi
 
   dlg_message "Информация" "Очистка и разметка диска, создание файловых систем..."
@@ -426,7 +425,7 @@ fi
 
 ntpdate pool.ntp.org
 realm leave ${DOMAIN_NAME} ${DOMAIN_USER}
-system-auth write ad ${DOMAIN_NAME} ${MACHINE_HOST_NAME} ${DOMAIN_NAME_SHORT} ${DOMAIN_USER} '${DOMAIN_PASSWORD}'
+system-auth write ad ${DOMAIN_NAME} ${MACHINE_HOST_NAME} ${DOMAIN_NAME_SHORT} ${DOMAIN_USER} '${pass}'
 #apt-get install -y gpupdate alterator-auth alterator-gpupdate
 gpupdate-setup write enable workstation
 EOF
@@ -454,7 +453,6 @@ fi
 }
 
 function free_drive() {
-  set -x
   image_mntpnt=$(df | grep image | awk {'print $6'})
   if [ "$image_mntpnt" = "/image" ]; then
     dlg_message "Информация" "Освобождаем загрузочный носитель..."
@@ -485,21 +483,20 @@ elif [ "$DLG_NETWORK_MODE" = "STATIC" ]; then
   DEV=$(echo $DATA | awk {'print $1'})
   IPMASK=$(echo $DATA | awk {'print $2'})
   GW=$(echo $DATA | awk {'print $3'})
-  ip a f dev ${DEV}
-  ip a add ${IPMASK} dev ${DEV}
-  ip link set dev ${DEV} up
-  [ -z "${GW}" ] || ip ro add default via ${GW} dev ${DEV} onlink
+  ifconfig ${DEV} down
+  ifconfig ${DEV} up
+  ifconfig ${DEV} ${IPMASK}
+  [ -z "${GW}" ] || ip ro del default;ip ro add default via ${GW}
   sleep 2
 
   DLG_DHCPSRV_SETUP=$(dlg_dhcpsrv_setup)
   if [ "$DLG_DHCPSRV_SETUP" = "YES" ]; then
-
     IFACE=$(dlg_mode_udpcast_get_iface)
     IP_BASE=`ifconfig ${IFACE} | head -2 | tail -1 | sed 's/:/ /g' | awk {'print $3'} | awk -F '.' {'print $1"."$2"."$3'}`
     SUBNET_IP="${IP_BASE}.0"
-    RANGE_FROM="${IP_BASE}.1"
-    RANGE_TO="${IP_BASE}.252"
-    ROUTE_AND_DNS="${IP_BASE}.253"
+    RANGE_FROM="${IP_BASE}.10"
+    RANGE_TO="${IP_BASE}.210"
+    ROUTE_AND_DNS="${IP_BASE}.1"
     NETMASK=`ifconfig ${IFACE} | head -2 | tail -1 | sed 's/:/ /g' | awk {'print $7'}`
 
 cat << EOF > /etc/dhcp/dhcpd.conf
@@ -514,6 +511,9 @@ subnet ${SUBNET_IP} netmask ${NETMASK} {
 }
 EOF
 
+    killall dhcpcd
+    ifconfig ${IFACE} down
+    ifconfig ${IFACE} up
     killall dhcpd
     dhcpd -cf /etc/dhcp/dhcpd.conf
     dlg_message "Информация" "Запущен DHCP сервер\n\nДля продолжения нажмите любую клавишу..."
@@ -524,12 +524,9 @@ EOF
   fi
 
 else
-  dlg_message "ОШИБКА!" "Отменено пользователем\n\nДля продолжения нажмите любую клавишу..."
+  dlg_message "Информация" "Настройка сети не производилась\n\nДля продолжения нажмите любую клавишу..."
   read
-  exit 1
 fi
-dlg_message "Информация" "Сеть настроена\n\nДля продолжения нажмите любую клавишу..."
-read
 
 # выбираем режим работы
 DLG_MODE=$(dlg_mode)
@@ -541,13 +538,11 @@ IFACE=$(dlg_mode_udpcast_get_iface)
 if [ "$UDPCAST_MODE" = "SEND" ]; then
   UDP_SRC=$(dlg_mode_udpcast_get_src)
   dlg_message "Запущен процесс посылатора (udp-sender). Наблюдайте за выводом команды..."
-  set -x
-  /usr/sbin/udp-sender --nokbd --autostart 10 --interface ${IFACE} --pipe '/bin/gzip -c -' -f ${UDP_SRC} > /dev/console 2>&1
+  /usr/sbin/udp-sender --interface ${IFACE} --pipe '/bin/gzip -c -' -f ${UDP_SRC} > /dev/console 2>&1
 elif [ "$UDPCAST_MODE" = "RECEIVE" ]; then
   UDP_DST=$(dlg_mode_udpcast_get_dst)
-  set -x
   dlg_message "Запущен процесс приниматора (udp-receiver). Наблюдайте за выводом команды..."
-  /usr/sbin/udp-receiver --nokbd --no-progress --interface ${IFACE} --pipe '/bin/gzip -d -c -' -f ${UDP_DST} > /dev/console 2>&1
+  /usr/sbin/udp-receiver --interface ${IFACE} --pipe '/bin/gzip -d -c -' -f ${UDP_DST} > /dev/console 2>&1
 else
   dlg_message "ОШИБКА!" "Отменено пользователем\n\nДля продолжения нажмите любую клавишу..."
   read
@@ -613,7 +608,7 @@ elif [ "$MODE" = "RESTORE" ]; then
   dlg_message "Информация" "Выбран режим восстановления из резервной копии\n\nДля продолжения нажмите любую клавишу..."
   read
   mode_restore
-elif [ "$MODE" = "EMPTY" ]; then
+elif [ "$MODE" = "NONE" ]; then
   dlg_message "ОШИБКА!" "Нужно обязательно выбрать один из режимов:\n\t(BACKUP или RESTORE)!\n\nДля продолжения нажмите любую клавишу..."
   read
   exit 1

@@ -34,8 +34,8 @@ function dlg_network_setup(){
 ETH_OPTIONS=$(ip -br link show | awk {'print $1'} | grep -v lo | awk {'print $1 " " $1 " off"'} | tr '\n' ' ' | sed "0,/off/s/off/on/")
 echo \
 `dialog --stdout --title "Настройка сети вручную" --radiolist "Сетевой интерфейс:" 10 60 10 ${ETH_OPTIONS}` \
-`dialog --stdout --title "Настройка сети вручную" --inputbox "IP-адрес" 10 60 "192.168.254.254/24"` \
-`dialog --stdout --title "Настройка сети вручную" --inputbox "Адрес основного шлюза" 10 60 "192.168.254.2"`
+`dialog --stdout --title "Настройка сети вручную" --inputbox "IP-адрес" 10 60 "192.168.254.2/24"` \
+`dialog --stdout --title "Настройка сети вручную" --inputbox "Адрес основного шлюза" 10 60 "192.168.254.1"`
 }
 
 function dlg_mode_udpcast_get_iface(){
@@ -131,7 +131,7 @@ echo `dialog --stdout --title "Выбор резервной копии " --radi
 function dlg_message(){
 TITLE=$1
 MESSAGE=$2
-echo `dialog --stdout --title "${TITLE}" --infobox "${MESSAGE}" 10 60`
+echo `dialog --stdout --title "${TITLE}" --infobox "${MESSAGE}" 10 90`
 }
 
 function mode_backup(){
@@ -403,7 +403,7 @@ EOF
   mount --bind /dev/ ${root_mntpnt}/dev
 
 #chroot
-chroot ${root_mntpnt}/  << EOF
+chroot ${root_mntpnt} << 'EOF'
 kernel_version=$(ls -la /boot/vmlinuz | awk {'print $11'} | sed 's/vmlinuz-//g')
 make-initrd -k ${kernel_version}
 grub-install ${BACKUP_DST}

@@ -538,11 +538,11 @@ IFACE=$(dlg_mode_udpcast_get_iface)
 if [ "$UDPCAST_MODE" = "SEND" ]; then
   UDP_SRC=$(dlg_mode_udpcast_get_src)
   dlg_message "Запущен процесс посылатора (udp-sender). Наблюдайте за выводом команды..."
-  /usr/sbin/udp-sender --interface ${IFACE} --pipe '/bin/gzip -c -' -f ${UDP_SRC} > /dev/console 2>&1
+  /usr/sbin/udp-sender --interface ${IFACE} -f ${UDP_SRC}
 elif [ "$UDPCAST_MODE" = "RECEIVE" ]; then
   UDP_DST=$(dlg_mode_udpcast_get_dst)
   dlg_message "Запущен процесс приниматора (udp-receiver). Наблюдайте за выводом команды..."
-  /usr/sbin/udp-receiver --interface ${IFACE} --pipe '/bin/gzip -d -c -' -f ${UDP_DST} > /dev/console 2>&1
+  /usr/sbin/udp-receiver --interface ${IFACE} -f ${UDP_DST}
 else
   dlg_message "ОШИБКА!" "Отменено пользователем\n\nДля продолжения нажмите любую клавишу..."
   read
